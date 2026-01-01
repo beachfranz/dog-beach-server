@@ -8,7 +8,7 @@ const { addDays, format } = require('date-fns');
 // FOR LOCAL TESTING: Paste your keys inside the quotes below.
 // FOR GITHUB ACTIONS: Keep the process.env part.
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://pcflisikfdnsgmtlpgeb.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sbp_b95d672b44f14b2f288feaef7454b49ccef12927';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_secret_c4D2yMUPhnMzADVpf62V6A_1GqAInR2';
 
 if (!SUPABASE_URL || !SUPABASE_KEY || SUPABASE_URL.includes('YOUR_')) {
     console.error("❌ ERROR: Missing Supabase Credentials.");
