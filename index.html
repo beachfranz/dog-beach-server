@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dog Beach Scout</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-900 text-white font-sans antialiased p-6">
+
+    <div class="max-w-md mx-auto">
+        
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-teal-400">🐶 Dog Beach Scout</h1>
+            <p class="text-slate-400">Live conditions from the database</p>
+        </header>
+
+        <div id="weather-card" class="bg-slate-800 rounded-xl p-6 shadow-lg border border-slate-700">
+            <h2 class="text-xl font-semibold mb-1" id="location-name">Loading...</h2>
+            <p class="text-sm text-slate-400 mb-6" id="timestamp">Scanning...</p>
+            
+            <div class="grid grid-cols-2 gap-4">
+                
+                <div class="bg-slate-700/50 p-4 rounded-lg">
+                    <p class="text-xs text-slate-400 uppercase">Air Temp</p>
+                    <p class="text-2xl font-bold" id="temp-air">--°</p>
+                    <p class="text-xs text-teal-300">Feels like <span id="temp-feels">--</span>°</p>
+                </div>
+
+                <div class="bg-slate-700/50 p-4 rounded-lg">
+                    <p class="text-xs text-slate-400 uppercase">Water</p>
+                    <p class="text-2xl font-bold text-blue-400" id="temp-water">--°</p>
+                </div>
+
+                <div class="bg-slate-700/50 p-4 rounded-lg">
+                    <p class="text-xs text-slate-400 uppercase">Wind</p>
+                    <p class="text-2xl font-bold" id="wind">--</p>
+                    <p class="text-xs text-slate-400">mph</p>
+                </div>
+
+                <div class="bg-slate-700/50 p-4 rounded-lg">
+                    <p class="text-xs text-slate-400 uppercase">Humidity</p>
+                    <p class="text-2xl font-bold text-purple-400" id="humidity">--%</p>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="mt-8 text-xs text-slate-600">
+            <p>Database Status: <span id="status" class="text-yellow-500">Connecting...</span></p>
+        </div>
+
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        // 🟢 USE YOUR 'ANON' (PUBLIC) KEY HERE! 
+        // It is safe to expose this in HTML.
+        const SUPABASE_URL = 'https://YOUR-PROJECT-ID.supabase.co';
+        const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY-HERE';
+
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function loadDashboard() {
+            const statusEl = document.getElementById('status');
+            
+            try {
+                // 1. Get the current time in ISO format (e.g. 2026-01-01T14:00:00)
+                // We want the closest hour.
+                const now = new Date();
+                now.setMinutes(0,0,0);
+                const currentIso = now.toISOString();
+                const todayDate = currentIso.split('T')[0];
+
+                // 2. Fetch Hourly Details (For Air, Wind, Humidity)
+                // We filter where location = 'huntington_north' AND time is NOW
+                const { data: hourly, error: hError } = await supabase
+                    .from('hourly_details')
+                    .select('*')
+                    .eq('location_id', 'huntington_north')
+                    .eq('timestamp', currentIso) 
+                    .maybeSingle(); // "maybeSingle" avoids errors if no row found
+
+                // 3. Fetch Daily Summary (For Water Temp - since it's a daily stat)
+                const { data: daily, error: dError } = await supabase
+                    .from('daily_summaries')
+                    .select('temp_water_avg')
+                    .eq('location_id', 'huntington_north')
+                    .eq('date', todayDate)
+                    .maybeSingle();
+
+                if (hError) throw hError;
+
+                // 4. Update the UI
+                if (hourly) {
+                    document.getElementById('location-name').innerText = "Huntington Dog Beach";
+                    document.getElementById('timestamp').innerText = new Date(hourly.timestamp).toLocaleString();
+                    
+                    document.getElementById('temp-air').innerText = hourly.temp_air + "°";
+                    document.getElementById('temp-feels').innerText = hourly.temp_feels_like;
+                    document.getElementById('wind').innerText = hourly.wind_speed;
+                    document.getElementById('humidity').innerText = hourly.humidity + "%";
+                    
+                    if (daily) {
+                        document.getElementById('temp-water').innerText = daily.temp_water_avg + "°";
+                    }
+
+                    statusEl.innerText = "Live";
+                    statusEl.className = "text-green-500";
+                } else {
+                    statusEl.innerText = "No data found for this hour. Run ingestion!";
+                    statusEl.className = "text-red-500";
+                }
+
+            } catch (err) {
+                console.error(err);
+                statusEl.innerText = "Error: " + err.message;
+                statusEl.className = "text-red-500";
+            }
+        }
+
+        // Run on load
+        loadDashboard();
+
+    </script>
+</body>
+</html>
