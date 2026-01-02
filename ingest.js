@@ -1,3 +1,5 @@
+// ingest.js
+
 // --- DEPENDENCIES ---
 // Run this in terminal first: npm install @supabase/supabase-js axios date-fns
 const { createClient } = require('@supabase/supabase-js');
@@ -7,8 +9,8 @@ const { addDays, format } = require('date-fns');
 // --- CONFIGURATION ---
 // FOR LOCAL TESTING: Paste your keys inside the quotes below.
 // FOR GITHUB ACTIONS: Keep the process.env part.
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://pcflisikfdnsgmtlpgeb.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_secret_c4D2yMUPhnMzADVpf62V6A_1GqAInR2';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'YOUR_SUPABASE_PROJECT_URL_HERE';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || 'YOUR_SUPABASE_SERVICE_ROLE_KEY_HERE';
 
 if (!SUPABASE_URL || !SUPABASE_KEY || SUPABASE_URL.includes('YOUR_')) {
     console.error("❌ ERROR: Missing Supabase Credentials.");
@@ -67,17 +69,7 @@ async function processLocation(beach) {
         console.log("   --> Processing Hourly Details...");
         const hourlyRows = processHourlyData(beach.location_id, weather, tides);
         
-        const { error: hError } = await supabase
-            .from('hourly_details')
-            .upsert(hourlyRows, { onConflict: 'id' }); // Note: Schema might need composite constraint or ID handling
-        
-        // *Better Fix for Supabase*: Delete old hourly data for these dates first to avoid ID conflicts, 
-        // or just let Supabase handle new IDs. For simplicity here, we assume standard insert.
-        // Actually, upserting by ID is tricky if ID is random. 
-        // STRATEGY CHANGE: We will just INSERT fresh data. 
-        // Real production apps usually DELETE 'future' data for this location first, then INSERT new.
-        
-        // Let's do the "Clean & Replace" strategy for the next 7 days to keep it clean.
+        // Clean up old future data to avoid conflicts, then insert new
         const todayISO = new Date().toISOString();
         await supabase.from('hourly_details').delete().eq('location_id', beach.location_id).gte('timestamp', todayISO);
         
@@ -123,7 +115,6 @@ function processHourlyData(locationId, weather, tides) {
         const lookupDate = new Date(ts).toISOString();
         
         // Find tide (or interpolate/fallback)
-        // NOAA tides are specific. If exact hour missing, use 0 or nearest.
         let tideVal = tideMap[lookupDate];
         if (tideVal === undefined) tideVal = 0; 
 
