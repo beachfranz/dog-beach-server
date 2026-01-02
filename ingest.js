@@ -9,8 +9,8 @@ const { addDays, format } = require('date-fns');
 // --- CONFIGURATION ---
 // FOR LOCAL TESTING: Paste your keys inside the quotes below.
 // FOR GITHUB ACTIONS: Keep the process.env part.
-const SUPABASE_URL = process.env.SUPABASE_URL || 'YOUR_SUPABASE_PROJECT_URL_HERE';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || 'YOUR_SUPABASE_SERVICE_ROLE_KEY_HERE';
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_KEY || SUPABASE_URL.includes('YOUR_')) {
     console.error("❌ ERROR: Missing Supabase Credentials.");
