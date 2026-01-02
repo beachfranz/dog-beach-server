@@ -1,0 +1,14 @@
+{
+  "name": "dog-beach-scout-backend",
+  "version": "1.0.0",
+  "description": "Daily ingestion script for Supabase",
+  "main": "ingest.js",
+  "scripts": {
+    "start": "node ingest.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "axios": "^1.6.2",
+    "date-fns": "^2.30.0"
+  }
+}
